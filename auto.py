@@ -1,4 +1,4 @@
-import os
+import os #WORKER
 import requests
 import time
 import sys
@@ -38,6 +38,9 @@ RAW_START = str(os.environ.get("INPUT_START", "1")).strip()
 INPUT_QTY = int(os.environ.get("INPUT_QTY", 0))
 INPUT_DUR = float(os.environ.get("INPUT_DUR", 0))
 
+# 📝 MENERIMA NAMA ENGINE DARI BOT
+ENGINE_NAME = str(os.environ.get("INPUT_ENGINE_NAME", "Unknown Engine")).strip()
+
 # ==========================================
 # 🎨 FORMAT UI DOUBLE VAULT (4 TINGKAT)
 # ==========================================
@@ -70,6 +73,7 @@ def edit_telegram_notification(sent_messages, new_message):
         try: requests.post(url, json=payload, timeout=15)
         except: pass
 
+# 🔥 LOGIKA ASLI DIKEMBALIKAN UTUH (STARS, WATCH, FOLLOW, FORKS)
 def check_existing(token, target, action_type):
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github.v3+json"}
     try:
@@ -90,6 +94,7 @@ def check_existing(token, target, action_type):
     except: pass
     return False
 
+# 🔥 LOGIKA ASLI DIKEMBALIKAN UTUH (STARS, WATCH, FOLLOW, FORKS)
 def perform_api_action(token, target, action_type):
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github.v3+json", "X-GitHub-Api-Version": "2022-11-28"}
     try:
@@ -115,6 +120,7 @@ def main():
     if not all_tokens or not TARGETS:
         sys.exit(1)
 
+    # 🔥 LOGIKA PARSING ASLI DIKEMBALIKAN UTUH
     if "," in RAW_START:
         indices = [int(x.strip()) - 1 for x in RAW_START.split(",") if x.strip().isdigit()]
         tokens_to_use = [(i, all_tokens[i]) for i in indices if 0 <= i < len(all_tokens)]
@@ -138,6 +144,7 @@ def main():
     pre_msg = (f"{L_TOP}\n"
                f" 🔴 <b>CORP-SEC ALERTS</b>\n"
                f"{L_MID}\n"
+               f" ❖ <b>ENGINE    </b> : {ENGINE_NAME}\n"
                f" ❖ <b>DIRECTIVE </b> : {ACTION_TYPE}_INJECT\n"
                f" ❖ <b>ASSET ID  </b> : <a href='https://github.com/{selected_target}'>{selected_target}</a>\n"
                f" ❖ <b>OPERATIVE </b> : {worker_info}\n"
@@ -157,6 +164,7 @@ def main():
         clean_token = token[4:] if token.startswith("ghp_") else token
         token_preview = f"{clean_token[:5]}...{clean_token[-4:]}"
         
+        # 🟡 LOADING BAR PROGRESS DIBUAT
         progress_pct = int(((step_i) / len(tokens_to_use)) * 100)
         bar = "▓" * (progress_pct // 10) + "░" * (10 - (progress_pct // 10))
         
@@ -164,6 +172,7 @@ def main():
         msg_live = (f"{L_TOP}\n"
                     f" 🟡 <b>INJECTION PROGRESS</b>\n"
                     f"{L_MID}\n"
+                    f" ❖ <b>ENGINE    </b> : {ENGINE_NAME}\n"
                     f" ❖ <b>ASSET ID  </b> : <a href='https://github.com/{selected_target}'>{selected_target}</a>\n"
                     f" ❖ <b>OPERATIVE </b> : #{real_idx + 1} (<code>{token_preview}</code>)\n"
                     f" ❖ <b>PROG QUEUE</b> : SEQ {step_i + 1}/{len(tokens_to_use)}\n"
@@ -189,13 +198,11 @@ def main():
             res_msg = info
             status_text = " 🟢 <b>TRANSACTION LOGGED</b>" if success else " 🔴 <b>TRANSACTION FAILED</b>"
 
-        final_pct = int(((step_i + 1) / len(tokens_to_use)) * 100)
-        final_bar = "▓" * (final_pct // 10) + "░" * (10 - (final_pct // 10))
-        
         # 3. PESAN SELESAI 1 NODE
         msg_done = (f"{L_TOP}\n"
                     f"{status_text}\n"
                     f"{L_MID}\n"
+                    f" ❖ <b>ENGINE    </b> : {ENGINE_NAME}\n"
                     f" ❖ <b>VALIDATION</b> : {res_msg}\n"
                     f" ❖ <b>ASSET ID  </b> : <a href='https://github.com/{selected_target}'>{selected_target}</a>\n"
                     f" ❖ <b>OPERATIVE </b> : #{real_idx + 1} (<code>{token_preview}</code>)\n"
@@ -218,6 +225,7 @@ def main():
     final_report = (f"{L_TOP}\n"
                     f" 🏁 <b>DAEMON TERMINATED</b>\n"
                     f"{L_MID}\n"
+                    f" ❖ <b>ENGINE    </b> : {ENGINE_NAME}\n"
                     f" ❖ <b>DIRECTIVE </b> : {ACTION_TYPE}_INJECT\n"
                     f" ❖ <b>ASSET ID  </b> : <a href='https://github.com/{selected_target}'>{selected_target}</a>\n"
                     f" ❖ <b>EXIT CODE </b> : {success_count}/{len(tokens_to_use)} SUCCESS\n"
@@ -232,4 +240,19 @@ def main():
     send_telegram_notification(final_report)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        # Peringatan kalau worker mati di tengah jalan
+        err_msg = (
+            f"{L_TOP}\n"
+            f" ⚠️ <b>ENGINE ERROR / CRASHED!</b>\n"
+            f"{L_MID}\n"
+            f" ❖ <b>ENGINE    </b> : {ENGINE_NAME}\n"
+            f" ❖ <b>REASON    </b> : <code>{str(e)[:50]}</code>\n"
+            f"{L_MID}\n"
+            f" 🛡️ Engineered by Abie Haryatmo\n"
+            f"╚════════════════════════════════╝"
+        )
+        send_telegram_notification(err_msg)
+        sys.exit(1)
