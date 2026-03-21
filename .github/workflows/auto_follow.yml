@@ -19,6 +19,10 @@ on:
         description: 'Bahasa output (id/en)'
         required: false
         default: 'id'
+      engine_name:        # <--- 1. TAMBAHAN PINTU MASUK ENGINE
+        description: 'Nama Mesin'
+        required: false
+        default: 'Unknown Engine'
 
 jobs:
   execute-bot:
@@ -46,4 +50,5 @@ jobs:
           INPUT_DUR: ${{ github.event.inputs.duration }}
           INPUT_START: ${{ github.event.inputs.start_index }}
           INPUT_LANG: ${{ github.event.inputs.lang }}
+          INPUT_ENGINE_NAME: ${{ github.event.inputs.engine_name }} # <--- 2. MENGIRIM NAMA ENGINE KE SCRIPT PYTHON
         run: python -u auto.py
